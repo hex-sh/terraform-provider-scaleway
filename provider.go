@@ -19,5 +19,11 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"scaleway_server": resourceServer(),
 		},
+		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
+			return Config{
+				Token:        d.Get("token").(string),
+				Organization: d.Get("organization").(string),
+			}, nil
+		},
 	}
 }

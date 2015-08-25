@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/hashicorp/terraform/helper/schema"
+	"net/http"
 )
 
 func resourceServer() *schema.Resource {
@@ -24,7 +27,28 @@ func resourceServer() *schema.Resource {
 
 }
 
+var baseUrl = "https://api.scaleway.com"
+
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
+	config := m.(*Config)
+	name := d.Get("name").(string)
+	imag := d.Get("image").(string)
+	fields := map[string]interface{}{
+		"organization": config.Organization,
+		"name":         name,
+		"image":        image,
+	}
+
+	data, err := json.Marshal(fields)
+	if err {
+		return err
+	}
+
+	resp, err := http.Post(baseUrl+"/servers", "application/json", bytes.NewReader(data))
+	if err {
+		return err
+	}
+
 	return nil
 }
 
