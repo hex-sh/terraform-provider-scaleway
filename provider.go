@@ -7,7 +7,7 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"token": &schema.Schema{
+			"auth_token": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -20,8 +20,8 @@ func Provider() *schema.Provider {
 			"scaleway_server": resourceServer(),
 		},
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
-			return Config{
-				Token:        d.Get("token").(string),
+			return &Config{
+				Token:        d.Get("auth_token").(string),
 				Organization: d.Get("organization").(string),
 			}, nil
 		},
