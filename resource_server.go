@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
-	"io/ioutil"
-	"net/http"
+	"github.com/scaleway/scaleway-cli/pkg/api"
 )
 
 func resourceServer() *schema.Resource {
@@ -23,6 +19,11 @@ func resourceServer() *schema.Resource {
 			"image": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+			"volumes": &schema.Schema{
+				Type:     schema.TypeMap,
+				Required: true,
 			},
 		},
 	}
@@ -32,46 +33,22 @@ func resourceServer() *schema.Resource {
 const baseUrl = "https://api.scaleway.com"
 
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
-	config := m.(*Config)
+	s := m.(*api.ScalewayAPI)
 	name := d.Get("name").(string)
 	image := d.Get("image").(string)
-	fields := map[string]interface{}{
-		"organization": config.Organization,
-		"name":         name,
-		"image":        image,
-		"volumes":      nil,
-	}
 
-	data, err := json.Marshal(fields)
-	if err != nil {
-		return err
-	}
-
-	res, err := http.Post(baseUrl+"/servers", "application/json", bytes.NewReader(data))
+	id, err := s.PostServer(api.ScalewayServerDefinition{
+		Name:  name,
+		Image: &image,
+		Volumes: map[string]string{
+			"0": "1",
+		},
+	})
 
 	if err != nil {
 		return err
 	}
-
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if res.StatusCode >= 400 {
-		return fmt.Errorf("%s:\n%s", res.Status, body)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	var resData map[string]interface{}
-	err = json.Unmarshal(body, &resData)
-	if err != nil {
-		return err
-	}
-
-	id := resData["id"].(string)
 	d.SetId(id)
-
 	return nil
 }
 
