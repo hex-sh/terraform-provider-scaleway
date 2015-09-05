@@ -25,6 +25,18 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeMap,
 				Required: true,
 			},
+			"dynamic_ip_required": &schema.Schema{
+				Type:     schema.TypeBool,
+				Required: false,
+			},
+			"bootscript": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: false,
+			},
+			"tags": &schema.Schema{
+				Type:     schema.TypeList,
+				Required: false,
+			},
 		},
 	}
 
@@ -41,11 +53,27 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 		volumes[k] = v.(string)
 	}
 
-	id, err := scaleway.PostServer(api.ScalewayServerDefinition{
-		Name:    d.Get("name").(string),
-		Image:   &image,
-		Volumes: volumes,
-	})
+	var def api.ScalewayServerDefinition
+
+	def.Name = d.Get("name").(string)
+	def.Image = &image
+	def.Volumes = volumes
+
+	if dynamicIPRequiredI, ok := d.GetOk("dynamic_ip_required"); ok {
+		dynamicIPRequired := dynamicIPRequiredI.(bool)
+		def.DynamicIPRequired = &dynamicIPRequired
+	}
+
+	if bootscriptI, ok := d.GetOk("bootscript"); ok {
+		bootscript := bootscriptI.(string)
+		def.Bootscript = &bootscript
+	}
+
+	if tags, ok := d.GetOk("tags"); ok {
+		def.Tags = tags.([]string)
+	}
+
+	id, err := scaleway.PostServer(def)
 	if err != nil {
 		return err
 	}
