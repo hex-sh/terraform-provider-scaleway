@@ -79,6 +79,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	err = scaleway.PostServerAction(id, "poweron")
+
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	scaleway := m.(*api.ScalewayAPI)
 
-	_, err := scaleway.GetServer(d.Id())
+	server, err := scaleway.GetServer(d.Id())
 
 	if err != nil {
 		serr := err.(api.ScalewayAPIError)
@@ -102,8 +103,13 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		}
 		return err
 	}
-	// TODO: set fields
 
+	d.SetConnInfo(map[string]string{
+		"type": "ssh",
+		"host": server.PublicAddress.IP,
+	})
+
+	// TODO: set more fields
 	return nil
 }
 
