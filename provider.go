@@ -2,16 +2,25 @@ package main
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/scaleway/scaleway-cli/pkg/api"
 )
 
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"auth_token": &schema.Schema{
+			"token": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 			"organization": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"api_endpoint": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"account_endpoint": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -20,10 +29,12 @@ func Provider() *schema.Provider {
 			"scaleway_server": resourceServer(),
 		},
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
-			return &Config{
-				Token:        d.Get("auth_token").(string),
-				Organization: d.Get("organization").(string),
-			}, nil
+			return api.NewScalewayAPI(
+				d.Get("api_endpoint").(string),
+				d.Get("account_endpoint").(string),
+				d.Get("organization").(string),
+				d.Get("token").(string),
+			)
 		},
 	}
 }
