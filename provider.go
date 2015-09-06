@@ -18,11 +18,13 @@ func Provider() *schema.Provider {
 			},
 			"api_endpoint": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "https://api.scaleway.com/",
 			},
 			"account_endpoint": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "https://account.scaleway.com/",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
