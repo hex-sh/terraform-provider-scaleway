@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/scaleway/scaleway-cli/pkg/api"
 )
@@ -51,6 +52,7 @@ func resourceServer() *schema.Resource {
 
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	scaleway := m.(*api.ScalewayAPI)
+	d.Partial(true)
 
 	image := d.Get("image").(string)
 
@@ -82,7 +84,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	id, err := scaleway.PostServer(def)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error Posting server with image %s", image)
 	}
 
 	err = scaleway.PostServerAction(id, "poweron")
@@ -93,18 +95,31 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId(id)
 
+	// maybe set Partial
+
 	_, err = api.WaitForServerReady(scaleway, id, "")
 
 	if err != nil {
 		return err
 	}
 
-	return resourceServerRead(d, m)
+	// FIXME: I'm not sure if this is effective.
+	// but we had times where the    scaleway.GetServer failed
+	// causing an "untainted" state without an ip address.
+	// this screws up stuff like ansible
+	d.SetPartial("id")
+
+	err = resourceServerRead(d, m)
+	if err != nil {
+		return err
+	}
+	d.SetPartial("ipv4_address")
+	d.Partial(false)
+	return nil
 }
 
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	scaleway := m.(*api.ScalewayAPI)
-
 	server, err := scaleway.GetServer(d.Id())
 
 	if err != nil {
