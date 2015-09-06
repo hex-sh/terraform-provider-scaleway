@@ -45,6 +45,18 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"ipv4_address_private": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"state": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"state_detail": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 
@@ -56,7 +68,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	image := d.Get("image").(string)
 
-	var volumes map[string]string
+	volumes := make(map[string]string)
 
 	for k, v := range d.Get("volumes").(map[string]interface{}) {
 		volumes[k] = v.(string)
@@ -136,6 +148,9 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 
 	// S.t. it's compactible with terraform-ansible
 	d.Set("ipv4_address", server.PublicAddress.IP)
+	d.Set("ipv4_address_private", server.PrivateIP)
+	d.Set("state", server.State)
+	d.Set("state_detail", server.StateDetail)
 
 	d.SetConnInfo(map[string]string{
 		"type": "ssh",
@@ -147,6 +162,27 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceServerUpdate(d *schema.ResourceData, m interface{}) error {
+	scaleway := m.(*api.ScalewayAPI)
+
+	var server api.ScalewayServerPatchDefinition
+
+	if d.HasChange("name") {
+		name := d.Get("name").(string)
+		server.Name = &name
+	}
+
+	if d.HasChange("volumes") {
+		volumes := make(map[string]api.ScalewayVolume)
+		for k, v := range d.Get("volumes").(map[string]interface{}) {
+			volumes[k] = api.ScalewayVolume{
+				Identifier: v.(string),
+			}
+		}
+		server.Volumes = &volumes
+	}
+
+	scaleway.PatchServer(d.Id(), server)
+
 	return nil
 }
 
