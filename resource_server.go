@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/scaleway/scaleway-cli/pkg/api"
@@ -96,7 +97,8 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	id, err := scaleway.PostServer(def)
 	if err != nil {
-		return fmt.Errorf("Error Posting server with image %s", image)
+		v, _ := json.Marshal(def)
+		return fmt.Errorf("Error Posting server with image %s. Reason: %s", image, v)
 	}
 
 	err = scaleway.PostServerAction(id, "poweron")

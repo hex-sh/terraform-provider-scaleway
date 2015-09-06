@@ -7,8 +7,9 @@ The Scaleway documentation is extremely lacking for now. I hope this improves la
 # Server creation
 
 ## IPs
-Upon server creation, if one doesn't explicitly provide a reserved IP, one
-is automatically created.
+Upon server creation, if one doesn't explicitly provide a reserved IP, a dynamic
+IP is created. The documentation says this isn't supported but it still seems
+supported...
 
 ## Implict volumes
 Upon server creation, if one doesn't provide any volumes,  a root volume (of the image provided) is added. Which has index 0.
