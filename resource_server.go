@@ -27,15 +27,22 @@ func resourceServer() *schema.Resource {
 			},
 			"dynamic_ip_required": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: false,
+				Optional: true,
 			},
 			"bootscript": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: false,
+				Optional: true,
 			},
 			"tags": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: false,
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional: true,
+			},
+			"ipv4_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -85,7 +92,14 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(id)
-	return nil
+
+	_, err = api.WaitForServerReady(scaleway, id, "")
+
+	if err != nil {
+		return err
+	}
+
+	return resourceServerRead(d, m)
 }
 
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
@@ -94,6 +108,7 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	server, err := scaleway.GetServer(d.Id())
 
 	if err != nil {
+		// TODO: make sure it's ScalewayAPIError or it might crash
 		serr := err.(api.ScalewayAPIError)
 
 		// if the resource was destroyed, destroy the resource locally
@@ -103,6 +118,9 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 		}
 		return err
 	}
+
+	// S.t. it's compactible with terraform-ansible
+	d.Set("ipv4_address", server.PublicAddress.IP)
 
 	d.SetConnInfo(map[string]string{
 		"type": "ssh",
