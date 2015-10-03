@@ -29,6 +29,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"scaleway_server": resourceServer(),
+			"scaleway_ip":     resourceIp(),
 		},
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
 			return api.NewScalewayAPI(

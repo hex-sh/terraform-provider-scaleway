@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/scaleway/scaleway-cli/pkg/api"
@@ -23,13 +23,9 @@ func resourceServer() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"volumes": &schema.Schema{
-				Type:     schema.TypeMap,
+			"size": &schema.Schema{
+				Type:     schema.TypeString,
 				Required: true,
-			},
-			"dynamic_ip_required": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
 			},
 			"bootscript": &schema.Schema{
 				Type:     schema.TypeString,
@@ -41,10 +37,6 @@ func resourceServer() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional: true,
-			},
-			"ipv4_address": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
 			},
 			"ipv4_address_private": &schema.Schema{
 				Type:     schema.TypeString,
@@ -65,26 +57,20 @@ func resourceServer() *schema.Resource {
 
 func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	scaleway := m.(*api.ScalewayAPI)
-	d.Partial(true)
 
 	image := d.Get("image").(string)
 
 	volumes := make(map[string]string)
 
-	for k, v := range d.Get("volumes").(map[string]interface{}) {
+	/*for k, v := range d.Get("volumes").(map[string]interface{}) {
 		volumes[k] = v.(string)
-	}
+	}*/
 
 	var def api.ScalewayServerDefinition
 
 	def.Name = d.Get("name").(string)
 	def.Image = &image
 	def.Volumes = volumes
-
-	if dynamicIPRequiredI, ok := d.GetOk("dynamic_ip_required"); ok {
-		dynamicIPRequired := dynamicIPRequiredI.(bool)
-		def.DynamicIPRequired = &dynamicIPRequired
-	}
 
 	if bootscriptI, ok := d.GetOk("bootscript"); ok {
 		bootscript := bootscriptI.(string)
@@ -97,8 +83,9 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	id, err := scaleway.PostServer(def)
 	if err != nil {
-		v, _ := json.Marshal(def)
-		return fmt.Errorf("Error Posting server with image %s. Reason: %s", image, v)
+		serr := err.(api.ScalewayAPIError)
+		// _, _ := json.Marshal(def)
+		return fmt.Errorf("Error Posting server with image %s. Reason: %s", image, serr.APIMessage)
 	}
 
 	err = scaleway.PostServerAction(id, "poweron")
@@ -109,27 +96,13 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId(id)
 
-	// maybe set Partial
-
 	_, err = api.WaitForServerReady(scaleway, id, "")
 
 	if err != nil {
 		return err
 	}
 
-	// FIXME: I'm not sure if this is effective.
-	// but we had times where the    scaleway.GetServer failed
-	// causing an "untainted" state without an ip address.
-	// this screws up stuff like ansible
-	d.SetPartial("id")
-
-	err = resourceServerRead(d, m)
-	if err != nil {
-		return err
-	}
-	d.SetPartial("ipv4_address")
-	d.Partial(false)
-	return nil
+	return resourceServerRead(d, m)
 }
 
 func resourceServerRead(d *schema.ResourceData, m interface{}) error {
@@ -149,7 +122,6 @@ func resourceServerRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// S.t. it's compactible with terraform-ansible
-	d.Set("ipv4_address", server.PublicAddress.IP)
 	d.Set("ipv4_address_private", server.PrivateIP)
 	d.Set("state", server.State)
 	d.Set("state_detail", server.StateDetail)
