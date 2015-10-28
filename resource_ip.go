@@ -40,7 +40,7 @@ func resourceIpRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("ip", ip)
+	d.Set("ip", ip.IP.Address)
 	return nil
 }
 
