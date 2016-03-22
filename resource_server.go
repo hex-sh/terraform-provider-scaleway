@@ -23,10 +23,6 @@ func resourceServer() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"size": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			"type": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
