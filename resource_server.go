@@ -27,6 +27,10 @@ func resourceServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"type": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"bootscript": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -71,6 +75,10 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 	def.Name = d.Get("name").(string)
 	def.Image = &image
 	def.Volumes = volumes
+
+	ipRequired := false
+	def.DynamicIPRequired = &ipRequired
+	def.CommercialType = d.Get("type").(string)
 
 	if bootscriptI, ok := d.GetOk("bootscript"); ok {
 		bootscript := bootscriptI.(string)

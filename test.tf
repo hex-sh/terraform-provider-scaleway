@@ -8,13 +8,11 @@ provider "scaleway" {
 
 resource "scaleway_server" "hex" {
   name = "Nginx"
-  image = "16bf98c1-1a50-4212-8a2c-4b2e5001837c"
+  image = "dd17877a-4dc8-4d94-82f5-05019b7f6d67"
   size = "50gb"
+  type = "C1"
 }
 
-resource "scaleway_ip"  "nginx_ip" {
-  server = "${scaleway_server.hex.id}"
-}
 
 
 
