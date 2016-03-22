@@ -104,7 +104,7 @@ func resourceServerCreate(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId(id)
 
-	_, err = api.WaitForServerReady(scaleway, id, "")
+	_, err = api.WaitForServerState(scaleway, id, "running")
 
 	if err != nil {
 		return err
