@@ -14,7 +14,7 @@ func resourceIp() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"server": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"ip": &schema.Schema{
 				Type:     schema.TypeString,
