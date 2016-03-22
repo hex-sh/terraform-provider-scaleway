@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/scaleway/scaleway-cli/pkg/api"
+	"github.com/scaleway/scaleway-cli/pkg/scwversion"
 )
 
 func Provider() *schema.Provider {
@@ -16,16 +17,6 @@ func Provider() *schema.Provider {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"api_endpoint": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "https://api.scaleway.com/",
-			},
-			"account_endpoint": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "https://account.scaleway.com/",
-			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"scaleway_server": resourceServer(),
@@ -33,10 +24,9 @@ func Provider() *schema.Provider {
 		},
 		ConfigureFunc: func(d *schema.ResourceData) (interface{}, error) {
 			return api.NewScalewayAPI(
-				d.Get("api_endpoint").(string),
-				d.Get("account_endpoint").(string),
 				d.Get("organization").(string),
 				d.Get("token").(string),
+				scwversion.UserAgent(),
 			)
 		},
 	}
