@@ -1,3 +1,5 @@
+# DEPRECATION NOTICE - THIS HAS BEEN MAINLINED IN https://www.terraform.io/docs/providers/scaleway/
+
 # terraform-provider-scaleway
 
 Allows you to declaritvely describe your scaleway infrastructure within terraform.
